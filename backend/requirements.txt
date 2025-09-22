@@ -1,0 +1,32 @@
+# Web framework
+fastapi[standard]==0.111.0
+
+# ASGI server (for running FastAPI)
+uvicorn[standard]==0.30.1
+
+# Database ORM + PostgreSQL driver
+sqlalchemy==2.0.32
+psycopg2-binary==2.9.9
+
+# Pydantic for data validation
+pydantic==2.8.2
+email-validator==2.2.0
+
+# Load environment variables from .env
+python-dotenv==1.0.1
+
+# Templates (serving HTML)
+jinja2==3.1.4
+
+# Password hashing
+passlib[bcrypt]==1.7.4
+
+# JWT tokens for authentication
+python-jose[cryptography]==3.3.0
+
+# Database migrations
+alembic==1.13.2
+
+# Session management
+itsdangerous==2.2.0
+python-multipart>=0.0.7
