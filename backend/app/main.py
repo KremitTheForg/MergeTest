@@ -29,11 +29,12 @@ from app.routers import auth as auth_router
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Candidate Intake API")
-templates = Jinja2Templates(directory="templates")
-app.add_middleware(SessionMiddleware, secret_key="super-secret-key")
 
 # Static & uploads (absolute paths)
 BASE_DIR = Path(__file__).resolve().parent.parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+app.add_middleware(SessionMiddleware, secret_key="super-secret-key")
+
 FRONTEND_DIST_DIR = BASE_DIR / "static" / "forms"
 FRONTEND_INDEX_FILE = FRONTEND_DIST_DIR / "index.html"
 
