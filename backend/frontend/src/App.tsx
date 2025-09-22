@@ -7,6 +7,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<IntakeForm />} />
+        <Route path="/candidate-form" element={<IntakeForm />} />
         <Route path="/evaluation" element={<EvaluationForm />} />
       </Routes>
     </Router>
