@@ -6,7 +6,7 @@ import secrets, hashlib
 
 from fastapi import FastAPI, Request, Depends, Form
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi import HTTPException
 from starlette.middleware.sessions import SessionMiddleware
@@ -34,6 +34,9 @@ app.add_middleware(SessionMiddleware, secret_key="super-secret-key")
 
 # Static & uploads (absolute paths)
 BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIST_DIR = BASE_DIR / "static" / "forms"
+FRONTEND_INDEX_FILE = FRONTEND_DIST_DIR / "index.html"
+
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 app.mount("/uploads", StaticFiles(directory=str(BASE_DIR / "uploads")), name="uploads")
 
@@ -62,6 +65,8 @@ def home(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/candidate-form", response_class=HTMLResponse)
 def candidate_form(request: Request):
+    if FRONTEND_INDEX_FILE.exists():
+        return FileResponse(FRONTEND_INDEX_FILE, media_type="text/html")
     return templates.TemplateResponse("index.html", {"request": request})
 
 

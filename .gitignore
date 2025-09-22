@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+.env
+venv/
+.venv/
+
+# FastAPI / Alembic artifacts
+backend/uploads/
+
+# Node
+node_modules/
+*.log
+
+# Frontend build output
+backend/static/forms/
+backend/frontend/dist/
