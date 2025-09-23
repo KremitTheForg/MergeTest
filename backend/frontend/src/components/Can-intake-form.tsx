@@ -88,15 +88,46 @@ function IntakeForm() {
         body: JSON.stringify(payload),
       });
 
+      codex/update-router-to-include-candidate-form-1366dg
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        const fallbackText = await response.text().catch(() => "");
+        const message = fallbackText.trim();
+        throw new Error(
+          message ||
+            (response.ok
+              ? "Unexpected response from the server."
+              : `Unable to submit the form. (status ${response.status})`)
+        );
+      }
+
+      const data = (await response.json().catch(() => null)) as
+        | {
+            detail?: unknown;
+            id?: unknown;
+          }
+        | null;
+
+      if (!response.ok) {
       if (!response.ok) {
         const data = await response.json().catch(() => null);
+      main
         const detail = typeof data?.detail === "string" ? data.detail : null;
         throw new Error(detail ?? "Unable to submit the form.");
       }
 
+      codex/update-router-to-include-candidate-form-1366dg
+      const detail = typeof data?.detail === "string" ? data.detail : null;
+      const id = typeof data?.id === "number" ? data.id : null;
+      const baseMessage = detail
+        ? detail.charAt(0).toUpperCase() + detail.slice(1)
+        : "Candidate successfully submitted.";
+      setSuccess(id ? `${baseMessage} (ID ${id}).` : baseMessage);
+
       const data = await response.json().catch(() => null);
       const detail = typeof data?.detail === "string" ? data.detail : null;
       setSuccess(detail ? detail.charAt(0).toUpperCase() + detail.slice(1) : "Candidate successfully submitted.");
+      main
       resetForm();
     } catch (submissionError) {
       setError(
