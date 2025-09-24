@@ -7,7 +7,11 @@ from fastapi.templating import Jinja2Templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
+
+BASE_DIR = Path(__file__).resolve().parents[3]
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
