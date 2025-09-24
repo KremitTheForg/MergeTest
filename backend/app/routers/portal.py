@@ -9,9 +9,10 @@ from pathlib import Path
 from .. import models, schemas, crud, database
 
 router = APIRouter(prefix="/portal", tags=["portal"])
-templates = Jinja2Templates(directory="templates")
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
-UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR = BASE_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 
