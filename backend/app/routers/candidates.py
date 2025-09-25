@@ -97,6 +97,8 @@ async def api_create_candidate(
     session_email = (session_user.get("email") or "").strip().lower()
     if session_email and session_email == str(payload.email).lower():
         candidate_data["user_id"] = session_user["id"]
+        user_id=session_user["id"],
+    )
     if payload.applied_on:
         candidate_data["applied_on"] = datetime.combine(
             payload.applied_on, datetime.min.time()

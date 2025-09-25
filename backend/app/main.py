@@ -116,7 +116,8 @@ def list_candidates(request: Request, db: Session = Depends(get_db)):
             "resume_paths": resume_paths,
         },
     )
-
+    candidates = db.query(models.Candidate).all()
+    return templates.TemplateResponse("candidates.html", {"request": request, "candidates": candidates})
 
 # =========================
 # Admin: Workers (Users with worker-status Candidate) + Filters
