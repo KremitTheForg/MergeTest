@@ -96,9 +96,28 @@ def admin_dashboard(request: Request, db: Session = Depends(get_db)):
 # =========================
 @app.get("/admin/candidates", response_class=HTMLResponse)
 def list_candidates(request: Request, db: Session = Depends(get_db)):
+    rows = (
+        db.query(models.Candidate, models.CandidateProfile.resume_path)
+        .outerjoin(
+            models.CandidateProfile,
+            models.CandidateProfile.candidate_id == models.Candidate.id,
+        )
+        .all()
+    )
+
+    candidates = [cand for cand, _ in rows]
+    resume_paths = {cand.id: resume_path for cand, resume_path in rows}
+
+    return templates.TemplateResponse(
+        "candidates.html",
+        {
+            "request": request,
+            "candidates": candidates,
+            "resume_paths": resume_paths,
+        },
+    )
     candidates = db.query(models.Candidate).all()
     return templates.TemplateResponse("candidates.html", {"request": request, "candidates": candidates})
-
 
 # =========================
 # Admin: Workers (Users with worker-status Candidate) + Filters
