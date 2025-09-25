@@ -13,6 +13,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.orm import Session
 from pydantic import EmailStr
 
+from datetime import datetime, timedelta, timezone
 from datetime import datetime, timedelta
 from sqlalchemy import or_, func
 
@@ -116,6 +117,7 @@ def list_candidates(request: Request, db: Session = Depends(get_db)):
             "resume_paths": resume_paths,
         },
     )
+  
     candidates = db.query(models.Candidate).all()
     return templates.TemplateResponse("candidates.html", {"request": request, "candidates": candidates})
 
@@ -141,6 +143,15 @@ def list_users(request: Request, db: Session = Depends(get_db)):
     # joining date range — using applied_on
     def _parse_iso(d: str):
         try:
+            value = datetime.fromisoformat(d)
+        except Exception:
+            return None
+
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+
+        return value.astimezone(timezone.utc)
+
             return datetime.fromisoformat(d)
         except Exception:
             return None

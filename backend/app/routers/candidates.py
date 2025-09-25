@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, ValidationError
 from typing import Optional
+from datetime import date, datetime, timezone
 from datetime import date, datetime
 from pathlib import Path
 from sqlalchemy.orm import Session
@@ -97,6 +98,11 @@ async def api_create_candidate(
     session_email = (session_user.get("email") or "").strip().lower()
     if session_email and session_email == str(payload.email).lower():
         candidate_data["user_id"] = session_user["id"]
+    if payload.applied_on:
+        candidate_data["applied_on"] = datetime.combine(
+            payload.applied_on,
+            datetime.min.time(),
+            tzinfo=timezone.utc,
         user_id=session_user["id"],
     )
     if payload.applied_on:
