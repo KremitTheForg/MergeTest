@@ -1,12 +1,12 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, DateTime, ForeignKey
+from sqlalchemy import String, Integer, DateTime, ForeignKey, Identity
 from sqlalchemy.sql import func
 from .database import Base
 
 class Candidate(Base):
     __tablename__ = "candidates"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, Identity(always=False), primary_key=True, index=True)
     first_name: Mapped[str]
     last_name: Mapped[str]
     email: Mapped[str] = mapped_column(unique=True, index=True)
@@ -25,7 +25,7 @@ class Candidate(Base):
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, Identity(always=False), primary_key=True, index=True)
     username: Mapped[str] = mapped_column(unique=True, index=True)
     email: Mapped[str] = mapped_column(unique=True, index=True)
     hashed_password: Mapped[str]
@@ -36,7 +36,7 @@ class User(Base):
 class CandidateProfile(Base):
     __tablename__ = "candidate_profiles"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, Identity(always=False), primary_key=True, index=True)
     candidate_id: Mapped[int] = mapped_column(ForeignKey("candidates.id"), unique=True)
 
     summary: Mapped[str | None]

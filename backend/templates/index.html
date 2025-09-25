@@ -138,9 +138,13 @@
         </div>
       </div>
 
-      <div class="upload-box" style="margin-top:20px;">
-        <p><strong>Browse photo or drop here</strong></p>
-        <p>A photo larger than 400px works best. Max 5MB.</p>
+      <div class="form-group" style="grid-column: span 2; margin-top:20px;">
+        <label for="resume">Resume</label>
+        <div class="upload-box">
+          <p><strong>Upload resume (PDF, DOC, or DOCX)</strong></p>
+          <p>Attach the candidate's most recent resume. Max 10MB.</p>
+          <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" style="margin-top:15px;" />
+        </div>
       </div>
 
       <div class="actions">
@@ -158,21 +162,27 @@
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const data = {
-      first_name: form.first_name.value,
-      last_name: form.last_name.value,
-      email: form.email.value,
-      mobile: form.mobile.value,
-      job_title: form.job_title.value,
-      address: form.address.value,
-      applied_on: form.applied_on.value
-    };
+    const formData = new FormData(form);
+    formData.set("first_name", form.first_name.value.trim());
+    formData.set("last_name", form.last_name.value.trim());
+    formData.set("email", form.email.value.trim());
+    formData.set("mobile", form.mobile.value.trim());
+    formData.set("job_title", form.job_title.value.trim());
+    formData.set("address", form.address.value.trim());
+    formData.set("applied_on", form.applied_on.value);
+
+    if (!form.applied_on.value) {
+      formData.delete("applied_on");
+    }
+
+    if (!form.resume.files.length) {
+      formData.delete("resume");
+    }
 
     try {
       const res = await fetch("/api/v1/hr/recruitment/candidates/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: formData,
         credentials: "include" // sends session cookie
       });
 
@@ -181,7 +191,11 @@
         const json = await res.json();
         if (!res.ok) throw new Error(json.detail || `Error ${res.status}`);
         resultDiv.style.display = "block";
-        resultDiv.textContent = "Candidate created with ID " + json.id;
+        let message = "Candidate created with ID " + json.id + ".";
+        if (json.resume_uploaded) {
+          message += " Resume uploaded.";
+        }
+        resultDiv.textContent = message;
       } else {
         const text = await res.text();
         if (!res.ok) throw new Error(text || `Error ${res.status}`);

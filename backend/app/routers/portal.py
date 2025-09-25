@@ -78,6 +78,36 @@ def profile_submit(
     )
 
 
+async def _handle_profile_upload(
+    *,
+    candidate: models.Candidate,
+    kind: str,
+    file: UploadFile,
+    db: Session,
+):
+    normalized_kind = "photo" if kind == "picture" else kind
+    if normalized_kind not in {"resume", "photo"}:
+        raise HTTPException(status_code=400, detail="kind must be 'resume' or 'photo'")
+
+    filename = file.filename or ""
+    default_ext = ".png" if normalized_kind == "photo" else ".pdf"
+    ext = os.path.splitext(filename)[1] or default_ext
+
+    folder = UPLOAD_DIR / str(candidate.id)
+    folder.mkdir(parents=True, exist_ok=True)
+    dest = folder / f"{normalized_kind}{ext}"
+
+    contents = await file.read()
+    if not contents:
+        raise HTTPException(status_code=400, detail="Uploaded file was empty")
+
+    with open(dest, "wb") as f:
+        f.write(contents)
+
+    relative_path = str(dest.relative_to(BASE_DIR))
+    crud.set_profile_file(db, candidate.id, normalized_kind, relative_path)
+
+
 @router.post("/profile/upload")
 async def upload_file(
     request: Request,
@@ -86,24 +116,33 @@ async def upload_file(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    if kind not in {"resume", "photo"}:
-        raise HTTPException(status_code=400, detail="kind must be 'resume' or 'photo'")
     candidate = crud.get_candidate_by_user(db, user_id=int(current_user.id))
     if not candidate:
         raise HTTPException(status_code=400, detail="No candidate linked to this user")
 
-    filename = file.filename or ""
-    ext = os.path.splitext(filename)[1] or (".png" if kind == "photo" else ".pdf")
-
-    # Save under uploads/{candidate_id}/
-    folder = UPLOAD_DIR / str(candidate.id)
-    folder.mkdir(parents=True, exist_ok=True)
-    dest = folder / f"{kind}{ext}"
-    with open(dest, "wb") as f:
-        f.write(await file.read())
-
-    _prof = crud.set_profile_file(db, candidate.id, kind, str(dest))
+    await _handle_profile_upload(candidate=candidate, kind=kind, file=file, db=db)
+    await file.close()
     return RedirectResponse(url="/portal/profile", status_code=303)
+
+
+@router.post("/profile/admin/{user_id}/upload")
+async def admin_upload_file(
+    user_id: int,
+    kind: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(database.get_db),
+):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    candidate = crud.get_candidate_by_user(db, user_id=int(db_user.id))
+    if not candidate:
+        raise HTTPException(status_code=400, detail="No candidate linked to this user")
+
+    await _handle_profile_upload(candidate=candidate, kind=kind, file=file, db=db)
+    await file.close()
+    return RedirectResponse(url=f"/portal/profile/admin/{db_user.id}", status_code=303)
 
 
 @router.get("/profile/admin/{user_id}", response_class=HTMLResponse)
