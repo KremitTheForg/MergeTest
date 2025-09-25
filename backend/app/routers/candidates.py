@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, ValidationError
 from typing import Optional
 from datetime import date, datetime, timezone
+from datetime import date, datetime
 from pathlib import Path
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -102,6 +103,12 @@ async def api_create_candidate(
             payload.applied_on,
             datetime.min.time(),
             tzinfo=timezone.utc,
+        user_id=session_user["id"],
+    )
+    if payload.applied_on:
+        candidate_data["applied_on"] = datetime.combine(
+            payload.applied_on, datetime.min.time()
+
         )
 
     cand = models.Candidate(**candidate_data)
