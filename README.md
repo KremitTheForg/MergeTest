@@ -29,6 +29,12 @@ Follow these steps whenever frontend changes need to be reflected in the backend
    uvicorn app.main:app --reload --app-dir backend
    ```
 
+   The backend now defaults to a SQLite database at `backend/app/local.db` if
+   no `DATABASE_URL` environment variable is set. This allows the server to boot
+   without any additional configuration. To use PostgreSQL or another RDBMS,
+   create a `.env` file with `DATABASE_URL=postgresql://user:pass@host/dbname`
+   before starting Uvicorn.
+
 4. Visit `http://localhost:8000/candidate-form`. If a React build exists the FastAPI route serves `backend/static/forms/index.html`; otherwise it falls back to the legacy Jinja `templates/index.html`.
 
 ## Local development tips
