@@ -165,6 +165,29 @@ async def admin_upload_file(
 
     await _handle_profile_upload(candidate=candidate, kind=kind, file=file, db=db)
     await file.close()
+
+    return RedirectResponse(url="/portal/profile", status_code=303)
+
+
+@router.post("/profile/admin/{user_id}/upload")
+async def admin_upload_file(
+    user_id: int,
+    kind: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(database.get_db),
+):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    candidate = crud.get_candidate_by_user(db, user_id=int(db_user.id))
+    if not candidate:
+        raise HTTPException(status_code=400, detail="No candidate linked to this user")
+
+    await _handle_profile_upload(candidate=candidate, kind=kind, file=file, db=db)
+    await file.close()
+    return RedirectResponse(url=f"/portal/profile/admin/{db_user.id}", status_code=303)
+=======
     return RedirectResponse(url=f"/portal/profile/admin/{db_user.id}", status_code=303)
     return RedirectResponse(url=f"/portal/profile/admin/{db_user.id}", status_code=303)
     filename = file.filename or ""

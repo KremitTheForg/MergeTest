@@ -108,6 +108,7 @@ async def api_create_candidate(
     if payload.applied_on:
         candidate_data["applied_on"] = datetime.combine(
             payload.applied_on, datetime.min.time()
+
         )
 
     cand = models.Candidate(**candidate_data)

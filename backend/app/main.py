@@ -47,6 +47,23 @@ WORKER_STATUSES = {"Hired", "Employee", "Active"}
 APPLICANT_STATUSES_EXCLUDE = WORKER_STATUSES
 
 
+def _parse_iso_to_utc(raw: str):
+    """Parse an ISO8601 string into a timezone-aware UTC datetime."""
+
+    if not raw:
+        return None
+
+    try:
+        value = datetime.fromisoformat(raw)
+    except Exception:
+        return None
+
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+
+    return value.astimezone(timezone.utc)
+
+
 # =========================
 # Public / Authenticated Landing
 # =========================
@@ -121,6 +138,7 @@ def list_candidates(request: Request, db: Session = Depends(get_db)):
     candidates = db.query(models.Candidate).all()
     return templates.TemplateResponse("candidates.html", {"request": request, "candidates": candidates})
 
+
 # =========================
 # Admin: Workers (Users with worker-status Candidate) + Filters
 # =========================
@@ -141,6 +159,10 @@ def list_users(request: Request, db: Session = Depends(get_db)):
         cand_filters.append(models.Candidate.job_title == role)
 
     # joining date range — using applied_on
+
+    start_dt = _parse_iso_to_utc(date_from)
+    end_dt   = _parse_iso_to_utc(date_to)
+
     def _parse_iso(d: str):
         try:
             value = datetime.fromisoformat(d)
@@ -158,6 +180,7 @@ def list_users(request: Request, db: Session = Depends(get_db)):
 
     start_dt = _parse_iso(date_from)
     end_dt   = _parse_iso(date_to)
+
     if start_dt:
         cand_filters.append(models.Candidate.applied_on >= start_dt)
     if end_dt:
