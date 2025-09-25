@@ -21,6 +21,11 @@ class CandidateOut(CandidateBase):
     class Config:
         from_attributes = True
 
+
+class CandidateWithProfile(BaseModel):
+    candidate: CandidateOut
+    profile: Optional["CandidateProfileOut"] = None
+
 ###
 
 class UserBase(BaseModel):
@@ -59,3 +64,62 @@ class CandidateProfileOut(CandidateProfileBase):
     # When returned as JSON
     class Config:
         from_attributes = True
+
+
+class AdminMetrics(BaseModel):
+    candidates: int
+    users: int
+    training: int
+
+
+class WorkerQueryFilters(BaseModel):
+    role: Optional[str] = None
+    status: Optional[str] = None
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
+    q: Optional[str] = None
+
+
+class WorkerUserOut(BaseModel):
+    user: UserOut
+    candidate: CandidateOut
+
+
+class WorkerListResponse(BaseModel):
+    results: list[WorkerUserOut]
+    filters: WorkerQueryFilters
+    roles: list[str]
+    status_options: list[str]
+
+
+class CandidateListResponse(BaseModel):
+    results: list[CandidateWithProfile]
+
+
+class ApplicantListResponse(BaseModel):
+    results: list[CandidateOut]
+
+
+class ApplicantConvertResponse(BaseModel):
+    detail: str
+
+
+class MeResponse(BaseModel):
+    user: UserOut
+    candidate: Optional[CandidateOut] = None
+    profile: Optional[CandidateProfileOut] = None
+
+
+class ProfileUpdatePayload(CandidateProfileUpdate):
+    job_title: Optional[str] = None
+
+
+class ProfileResponse(BaseModel):
+    candidate: CandidateOut
+    profile: CandidateProfileOut
+
+
+class ProfileUploadResponse(BaseModel):
+    candidate_id: int
+    kind: str
+    path: str
