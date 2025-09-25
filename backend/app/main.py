@@ -13,15 +13,13 @@ from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.orm import Session
 from pydantic import EmailStr
 
-from datetime import datetime, timedelta, timezone
-from datetime import datetime, timedelta
-from sqlalchemy import or_, func
-
 from app import models
 from app.database import Base, engine, get_db
 from app.routers import candidates as candidates_router
 from app.routers import portal as portal_router
 from app.routers import auth as auth_router
+from app.routers import api as api_router
+from app.services import admin as admin_service
 
 
 # =========================
@@ -42,26 +40,9 @@ FRONTEND_INDEX_FILE = FRONTEND_DIST_DIR / "index.html"
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 app.mount("/uploads", StaticFiles(directory=str(BASE_DIR / "uploads")), name="uploads")
 
-# Status buckets used by Applicants/Workers views
-WORKER_STATUSES = {"Hired", "Employee", "Active"}
-APPLICANT_STATUSES_EXCLUDE = WORKER_STATUSES
-
-
-def _parse_iso_to_utc(raw: str):
-    """Parse an ISO8601 string into a timezone-aware UTC datetime."""
-
-    if not raw:
-        return None
-
-    try:
-        value = datetime.fromisoformat(raw)
-    except Exception:
-        return None
-
-    if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
-
-    return value.astimezone(timezone.utc)
+# Status buckets used by Applicants/Workers views (shared with the API layer)
+WORKER_STATUSES = admin_service.WORKER_STATUSES
+APPLICANT_STATUSES_EXCLUDE = admin_service.APPLICANT_STATUSES_EXCLUDE
 
 
 # =========================
@@ -94,17 +75,14 @@ def candidate_form(request: Request):
 # =========================
 @app.get("/admin", response_class=HTMLResponse)
 def admin_dashboard(request: Request, db: Session = Depends(get_db)):
-    candidates_count = db.query(models.Candidate).count()
-    users_count = db.query(models.User).count()
-    training_count = 0
-
+    metrics = admin_service.get_dashboard_metrics(db)
     return templates.TemplateResponse(
         "admin_dashboard.html",
         {
             "request": request,
-            "candidates_count": candidates_count,
-            "users_count": users_count,
-            "training_count": training_count,
+            "candidates_count": metrics["candidates"],
+            "users_count": metrics["users"],
+            "training_count": metrics["training"],
         },
     )
 
@@ -114,17 +92,12 @@ def admin_dashboard(request: Request, db: Session = Depends(get_db)):
 # =========================
 @app.get("/admin/candidates", response_class=HTMLResponse)
 def list_candidates(request: Request, db: Session = Depends(get_db)):
-    rows = (
-        db.query(models.Candidate, models.CandidateProfile.resume_path)
-        .outerjoin(
-            models.CandidateProfile,
-            models.CandidateProfile.candidate_id == models.Candidate.id,
-        )
-        .all()
-    )
-
-    candidates = [cand for cand, _ in rows]
-    resume_paths = {cand.id: resume_path for cand, resume_path in rows}
+    rows = admin_service.fetch_candidates_with_profiles(db)
+    candidates = [candidate for candidate, _ in rows]
+    resume_paths = {
+        candidate.id: profile.resume_path if profile else None
+        for candidate, profile in rows
+    }
 
     return templates.TemplateResponse(
         "candidates.html",
@@ -134,9 +107,6 @@ def list_candidates(request: Request, db: Session = Depends(get_db)):
             "resume_paths": resume_paths,
         },
     )
-  
-    candidates = db.query(models.Candidate).all()
-    return templates.TemplateResponse("candidates.html", {"request": request, "candidates": candidates})
 
 
 # =========================
@@ -144,100 +114,33 @@ def list_candidates(request: Request, db: Session = Depends(get_db)):
 # =========================
 @app.get("/admin/users", response_class=HTMLResponse)
 def list_users(request: Request, db: Session = Depends(get_db)):
-    # ---- read query params
-    role      = (request.query_params.get("role")      or "").strip()
-    status    = (request.query_params.get("status")    or "").strip()
+    role = (request.query_params.get("role") or "").strip()
+    status = (request.query_params.get("status") or "").strip()
     date_from = (request.query_params.get("date_from") or "").strip()
-    date_to   = (request.query_params.get("date_to")   or "").strip()
-    q         = (request.query_params.get("q")         or "").strip()
+    date_to = (request.query_params.get("date_to") or "").strip()
+    q = (request.query_params.get("q") or "").strip()
 
-    # ---- base candidate filters
-    cand_filters = [models.Candidate.status.in_(WORKER_STATUSES)]
-    if status:
-        cand_filters = [models.Candidate.status == status]
-    if role:
-        cand_filters.append(models.Candidate.job_title == role)
-
-    # joining date range — using applied_on
-
-    start_dt = _parse_iso_to_utc(date_from)
-    end_dt   = _parse_iso_to_utc(date_to)
-
-    def _parse_iso(d: str):
-        try:
-            value = datetime.fromisoformat(d)
-        except Exception:
-            return None
-
-        if value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
-
-        return value.astimezone(timezone.utc)
-
-            return datetime.fromisoformat(d)
-        except Exception:
-            return None
-
-    start_dt = _parse_iso(date_from)
-    end_dt   = _parse_iso(date_to)
-
-    if start_dt:
-        cand_filters.append(models.Candidate.applied_on >= start_dt)
-    if end_dt:
-        cand_filters.append(models.Candidate.applied_on < (end_dt + timedelta(days=1)))
-
-    # keywords across candidate + user fields
-    if q:
-        like = f"%{q}%"
-        cand_filters.append(
-            or_(
-                models.Candidate.first_name.ilike(like),
-                models.Candidate.last_name.ilike(like),
-                models.Candidate.email.ilike(like),
-                models.Candidate.mobile.ilike(like),
-                models.User.username.ilike(like),
-                models.User.email.ilike(like),
-            )
-        )
-
-    # ---- single-pass query with join
-    rows = (
-        db.query(models.User, models.Candidate)
-          .join(models.Candidate, models.Candidate.user_id == models.User.id)
-          .filter(*cand_filters)
-          .order_by(func.lower(models.User.username))
-          .all()
+    result = admin_service.query_worker_users(
+        db,
+        role=role or None,
+        status=status or None,
+        date_from=date_from or None,
+        date_to=date_to or None,
+        q=q or None,
     )
 
-    users = [u for (u, _c) in rows]
-    user_candidates = {u.id: c for (u, c) in rows}
-
-    # ---- dropdown data
-    roles = [
-        r for (r,) in (
-            db.query(models.Candidate.job_title)
-              .filter(models.Candidate.status.in_(WORKER_STATUSES))
-              .filter(models.Candidate.job_title.isnot(None))
-              .distinct()
-              .all()
-        ) if r
-    ]
-    roles.sort(key=lambda s: s.lower()) # case-insensitive sort
-
-    status_options = sorted(WORKER_STATUSES)
-
-    flash = request.session.pop("flash", None) # One time flash message
-    return templates.TemplateResponse( # render the users.html template
+    flash = request.session.pop("flash", None)
+    return templates.TemplateResponse(
         "users.html",
         {
             "request": request,
-            "users": users,
-            "user_candidates": user_candidates,
+            "users": result.users,
+            "user_candidates": result.user_candidates,
             "flash": flash,
 
             # filter state/choices
-            "roles": roles,
-            "status_options": status_options,
+            "roles": result.roles,
+            "status_options": result.status_options,
             "role": role,
             "status": status,
             "date_from": date_from,
@@ -330,11 +233,7 @@ def create_user_and_candidate(
 # =========================
 @app.get("/admin/applicants", response_class=HTMLResponse)
 def list_applicants(request: Request, db: Session = Depends(get_db)):
-    applicants = (
-        db.query(models.Candidate)
-        .filter(~models.Candidate.status.in_(APPLICANT_STATUSES_EXCLUDE))
-        .all()
-    )
+    applicants = admin_service.list_applicants(db)
     flash = request.session.pop("flash", None)
     return templates.TemplateResponse("applicants.html", {"request": request, "applicants": applicants, "flash": flash})
 
@@ -380,21 +279,6 @@ def ensure_profile_and_open(candidate_id: int, request: Request, db: Session = D
 
     return RedirectResponse(url=f"/portal/profile/admin/{user.id}", status_code=303)
 
-# Simple convert (kept for history; overridden below by the robust version)
-@app.post("/admin/applicants/{candidate_id}/convert", response_class=HTMLResponse)
-def convert_applicant_to_worker(candidate_id: int, request: Request, db: Session = Depends(get_db)):
-    cand = db.query(models.Candidate).filter(models.Candidate.id == candidate_id).first()
-    if not cand:
-        request.session["flash"] = "Candidate not found."
-        return RedirectResponse(url="/admin/applicants", status_code=303)
-
-    cand.status = "Hired"
-    db.add(cand); db.commit()
-
-    request.session["flash"] = (f"{cand.first_name or ''} {cand.last_name or ''}".strip() or "Candidate") + " moved to Workers."
-    return RedirectResponse(url="/admin/users", status_code=303)
-
-# Robust convert (ensures linked User; placed AFTER simple version)
 @app.post("/admin/applicants/{candidate_id}/convert", response_class=HTMLResponse)
 def convert_applicant_to_worker(candidate_id: int, request: Request, db: Session = Depends(get_db)):
     cand = db.query(models.Candidate).filter(models.Candidate.id == candidate_id).first()
@@ -441,10 +325,8 @@ def convert_applicant_to_worker(candidate_id: int, request: Request, db: Session
 
         cand.user_id = user.id  # link candidate -> user
 
-    # Mark as worker
-    cand.status = "Hired"
-    db.add(cand)
-    db.commit()
+    # Mark as worker via the shared service (handles status + commit)
+    admin_service.convert_applicant_to_worker(db, cand)
 
     # If user already existed and we didn't set flash above, show a generic message
     if "flash" not in request.session:
@@ -460,3 +342,4 @@ def convert_applicant_to_worker(candidate_id: int, request: Request, db: Session
 app.include_router(candidates_router.router)
 app.include_router(auth_router.router)
 app.include_router(portal_router.router)
+app.include_router(api_router.router)
