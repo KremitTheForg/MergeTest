@@ -90,10 +90,10 @@
 
     <div class="row" style="margin-top:1rem;">
       <div class="muted">Profile Picture</div>
-      {% if profile.picture_path %}
+      {% if profile.photo_path %}
         <div class="file">
-          <img src="/{{ profile.picture_path }}" alt="Profile Picture" class="preview"/>
-        </div>
+          <img src="/{{ profile.photo_path }}" alt="Profile Picture" class="preview"/>
+      </div>
       {% else %}
         <div class="file muted">No profile picture uploaded.</div>
       {% endif %}
@@ -102,7 +102,7 @@
             action="{{ '/portal/profile/admin/' ~ user.id ~ '/upload' if admin_view else '/portal/profile/upload' }}"
             enctype="multipart/form-data"
             style="margin-top:.5rem;">
-        <input type="hidden" name="kind" value="picture"/>
+        <input type="hidden" name="kind" value="photo"/>
         <input type="file" name="file" accept=".png,.jpg,.jpeg" required/>
         <button type="submit">Upload Picture</button>
       </form>
