@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from pydantic import EmailStr
 
 from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from sqlalchemy import or_, func
 
 from app import models
@@ -116,7 +117,9 @@ def list_candidates(request: Request, db: Session = Depends(get_db)):
             "resume_paths": resume_paths,
         },
     )
-
+  
+    candidates = db.query(models.Candidate).all()
+    return templates.TemplateResponse("candidates.html", {"request": request, "candidates": candidates})
 
 # =========================
 # Admin: Workers (Users with worker-status Candidate) + Filters
@@ -148,6 +151,10 @@ def list_users(request: Request, db: Session = Depends(get_db)):
             return value.replace(tzinfo=timezone.utc)
 
         return value.astimezone(timezone.utc)
+
+            return datetime.fromisoformat(d)
+        except Exception:
+            return None
 
     start_dt = _parse_iso(date_from)
     end_dt   = _parse_iso(date_to)
