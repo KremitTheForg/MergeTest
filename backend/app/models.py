@@ -17,7 +17,9 @@ class Candidate(Base):
     status: Mapped[str] = mapped_column(default="Applied")
     applied_on: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"), nullable=True
+    )
     user: Mapped["User"] = relationship(back_populates="candidates")
     profile: Mapped["CandidateProfile"] = relationship(back_populates="candidate", uselist=False, cascade="all, delete-orphan")
 
