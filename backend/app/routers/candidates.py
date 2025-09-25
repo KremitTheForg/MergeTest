@@ -89,6 +89,14 @@ async def api_create_candidate(
         job_title=payload.job_title or "",
         address=payload.address or "",
         status="Applied",
+    )
+
+    # Only auto-link the new candidate to the logged-in user when they are
+    # submitting their own information. Admins adding applicants should not
+    # overwrite the candidate->user linkage with their own account.
+    session_email = (session_user.get("email") or "").strip().lower()
+    if session_email and session_email == str(payload.email).lower():
+        candidate_data["user_id"] = session_user["id"]
         user_id=session_user["id"],
     )
     if payload.applied_on:

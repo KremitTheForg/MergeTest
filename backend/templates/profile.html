@@ -69,30 +69,31 @@
 
   <div class="card">
     <h3>Files</h3>
-    <div class="row">
-      <div class="row">
-  <div class="muted">Resume</div>
-  {% if profile.resume_path %}
-    <div class="file"><a href="/{{ profile.resume_path }}">Download current resume</a></div>
-  {% else %}
-    <div class="file muted">No resume uploaded.</div>
-  {% endif %}
 
-  <form method="post"
-        action="{{ '/portal/profile/admin/' ~ user.id ~ '/upload' if admin_view else '/portal/profile/upload' }}"
-        enctype="multipart/form-data"
-        style="margin-top:.5rem;">
-    <input type="hidden" name="kind" value="resume"/>
-    <input type="file" name="file" accept=".pdf,.doc,.docx" required/>
-    <button type="submit">Upload Resume</button>
-  </form>
-</div>
+    <div class="row">
+      <div class="muted">Resume</div>
+      {% if profile.resume_path %}
+        <div class="file"><a href="/{{ profile.resume_path }}">Download current resume</a></div>
+      {% else %}
+        <div class="file muted">No resume uploaded.</div>
+      {% endif %}
+
+      <form method="post"
+            action="{{ '/portal/profile/admin/' ~ user.id ~ '/upload' if admin_view else '/portal/profile/upload' }}"
+            enctype="multipart/form-data"
+            style="margin-top:.5rem;">
+        <input type="hidden" name="kind" value="resume"/>
+        <input type="file" name="file" accept=".pdf,.doc,.docx" required/>
+        <button type="submit">Upload Resume</button>
+      </form>
+    </div>
 
     <div class="row" style="margin-top:1rem;">
       <div class="muted">Profile Picture</div>
       {% if profile.photo_path %}
         <div class="file">
           <img src="/{{ profile.photo_path }}" alt="Profile Picture" class="preview"/>
+        </div>
       </div>
       {% else %}
         <div class="file muted">No profile picture uploaded.</div>
@@ -106,7 +107,7 @@
         <input type="file" name="file" accept=".png,.jpg,.jpeg" required/>
         <button type="submit">Upload Picture</button>
       </form>
-    </div>  
+    </div>
   </div>
 </div>
 
