@@ -24,6 +24,7 @@
                 <th>Job Title</th>
                 <th>Status</th>
                 <th>Applied On</th>
+                <th>Resume</th>
             </tr>
         </thead>
         <tbody>
@@ -35,6 +36,14 @@
                 <td>{{ c.job_title or "—" }}</td>
                 <td>{{ c.status }}</td>
                 <td>{{ c.applied_on }}</td>
+                <td>
+                    {% set resume = resume_paths.get(c.id) %}
+                    {% if resume %}
+                        <a href="/{{ resume }}" target="_blank">Download</a>
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
