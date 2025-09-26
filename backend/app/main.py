@@ -7,7 +7,6 @@ import secrets, hashlib
 from fastapi import FastAPI, Request, Depends, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
-from fastapi.templating import Jinja2Templates
 from fastapi import HTTPException
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.orm import Session
@@ -19,6 +18,7 @@ from app.routers import candidates as candidates_router
 from app.routers import portal as portal_router
 from app.routers import auth as auth_router
 from app.routers import api as api_router
+from app.core.templates import get_templates
 from app.services import admin as admin_service
 from app.api.v1.api import api_router as ndis_api_router
 
@@ -32,7 +32,7 @@ app = FastAPI(title="Candidate Intake API")
 
 # Static & uploads (absolute paths)
 BASE_DIR = Path(__file__).resolve().parent.parent
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+templates = get_templates()
 app.add_middleware(SessionMiddleware, secret_key="super-secret-key")
 
 FRONTEND_DIST_DIR = BASE_DIR / "static" / "forms"
@@ -184,6 +184,8 @@ def list_candidates_users(request: Request, db: Session = Depends(get_db)):
 # =========================
 @app.get("/admin/users/new", response_class=HTMLResponse)
 def new_user_form(request: Request):
+    if FRONTEND_INDEX_FILE.exists():
+        return FileResponse(FRONTEND_INDEX_FILE, media_type="text/html")
     return templates.TemplateResponse("user_new.html", {"request": request})
 
 @app.post("/admin/users/new", response_class=HTMLResponse)
