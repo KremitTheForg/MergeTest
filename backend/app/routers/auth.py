@@ -1,14 +1,11 @@
-from pathlib import Path
-
 from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from sqlalchemy.orm import Session
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from .. import schemas, crud, database, models
+from ..core.templates import get_templates
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+templates = get_templates()
 
 
 # GET: show login form
