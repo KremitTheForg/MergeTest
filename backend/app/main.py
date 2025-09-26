@@ -20,6 +20,7 @@ from app.routers import portal as portal_router
 from app.routers import auth as auth_router
 from app.routers import api as api_router
 from app.services import admin as admin_service
+from app.api.v1.api import api_router as ndis_api_router
 
 
 # =========================
@@ -343,3 +344,4 @@ app.include_router(candidates_router.router)
 app.include_router(auth_router.router)
 app.include_router(portal_router.router)
 app.include_router(api_router.router)
+app.include_router(ndis_api_router, prefix="/api/v1")
