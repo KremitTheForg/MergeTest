@@ -7,7 +7,7 @@ from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
 
-from jinja2 import ChoiceLoader, FileSystemLoader
+from jinja2 import ChoiceLoader, Environment, FileSystemLoader
 
 
 @lru_cache()
@@ -38,6 +38,14 @@ def get_templates() -> Jinja2Templates:
             "exists in the project checkout."
         )
 
+    # Build a dedicated Jinja2 environment that is aware of every template
+    # directory from the outset.  Instantiating ``Jinja2Templates`` with the
+    # environment avoids reassigning loaders after initialisation which can be
+    # fragile on some platforms and older dependency versions.
+    loaders = [FileSystemLoader(str(path)) for path in existing_dirs]
+    loader = loaders[0] if len(loaders) == 1 else ChoiceLoader(loaders)
+
+    env = Environment(loader=loader, autoescape=True)
     # ``Jinja2Templates`` requires an initial directory; we point it at the
     # first available folder and then teach the underlying Jinja environment to
     # look in every discovered directory.  ``ChoiceLoader`` keeps FastAPI from
@@ -53,5 +61,5 @@ def get_templates() -> Jinja2Templates:
         )
 
 
-    return templates
+    return Jinja2Templates(env=env)
 
