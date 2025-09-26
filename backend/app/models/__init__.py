@@ -67,6 +67,12 @@ from .care_plan import (
     CarePlan,
     ProspectiveWorkflow,
     RiskAssessment,
+    CarePlanGoal,
+    CarePlanService,
+    RiskAssessment,
+    SupportWorker,
+    CareTeamMember,
+    ParticipantNote,
 )  # noqa: E402,F401
 from .document import (
     Document,
