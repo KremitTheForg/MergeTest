@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Iterable
 
 from fastapi.templating import Jinja2Templates
 
-from jinja2 import ChoiceLoader, FileSystemLoader
+from jinja2 import ChoiceLoader, Environment, FileSystemLoader, select_autoescape
 
 
 @lru_cache()
@@ -22,44 +23,43 @@ def get_templates() -> Jinja2Templates:
     subtle path mistakes across individual routers.
     """
 
-    # ``backend/app/core/templates.py`` -> ``backend/app`` -> ``backend``
-    base_dir = Path(__file__).resolve().parents[2]
+    module_root = Path(__file__).resolve().parents[2]
+    project_root = module_root.parent
+    cwd = Path.cwd()
 
+    def _candidate_paths(root: Path) -> Iterable[Path]:
+        yield root / "templates"
+        yield root / "app" / "templates"
+        yield root / "backend" / "templates"
+        yield root / "backend" / "app" / "templates"
 
-    candidate_dirs = [
-        base_dir / "templates",
-        base_dir / "app" / "templates",
-    ]
+    discovered_dirs: list[Path] = []
+    seen: set[Path] = set()
 
-    existing_dirs = [str(path) for path in candidate_dirs if path.exists()]
-    if not existing_dirs:
+    for root in (module_root, project_root, cwd):
+        for candidate in _candidate_paths(root):
+            if not candidate.exists():
+                continue
+
+            resolved = candidate.resolve()
+            if resolved not in seen:
+                seen.add(resolved)
+                discovered_dirs.append(resolved)
+
+    if not discovered_dirs:
         raise RuntimeError(
-            "No template directories were found. Ensure 'backend/templates' "
-            "exists in the project checkout."
+            "No template directories were found. Ensure the repository checkout "
+            "contains the expected 'backend/templates' or 'backend/app/templates' "
+            "folders."
         )
 
-    # ``Jinja2Templates`` requires an initial directory; afterward we swap in a
-    # ``ChoiceLoader`` so lookups span every available template folder.
-    templates = Jinja2Templates(directory=existing_dirs[0])
+    loaders = [FileSystemLoader(str(path)) for path in discovered_dirs]
+    loader = loaders[0] if len(loaders) == 1 else ChoiceLoader(loaders)
 
-    if len(existing_dirs) > 1:
-        templates.env.loader = ChoiceLoader(
-            [FileSystemLoader(path) for path in existing_dirs]
-        )
+    env = Environment(
+        loader=loader,
+        autoescape=select_autoescape(("html", "htm", "xml")),
+    )
 
-    primary_dir = base_dir / "templates"
-    app_templates_dir = base_dir / "app" / "templates"
-
-    templates = Jinja2Templates(directory=str(primary_dir))
-
-    # Ensure secondary template locations remain discoverable.  ``exists``
-    # guards against missing optional folders (e.g. during partial checkouts).
-    for extra_dir in (app_templates_dir,):
-        if extra_dir.exists():
-            extra_path = str(extra_dir)
-            if extra_path not in templates.env.loader.searchpath:
-                templates.env.loader.searchpath.append(extra_path)
-
-
-    return templates
+    return Jinja2Templates(env=env)
 
