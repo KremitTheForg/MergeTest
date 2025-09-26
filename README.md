@@ -57,6 +57,16 @@ The React components that ship with the repo are intentionally light-weight UI s
 
 Until those wiring steps are completed the React pages will render the correct layout but keep static placeholder data.
 
+
+### Which screens are React-powered?
+
+- **React + Vite SPA** – the public candidate intake flow (`/candidate-form`) and the admin “Add Employee” screen (`/admin/users/new`) are implemented in React. When you run `npm run build` the bundle is emitted to `backend/static/forms` and transparently picked up by the FastAPI routes. During development you can also visit `http://localhost:5173` while running `npm run dev` for hot reload.
+- **Server-rendered (Jinja)** – the remaining administrative dashboards (`/admin/...`), worker management flows outside of “Add Employee”, and applicant profile management (`/portal/profile`, `/portal/profile/admin/{user_id}`) still rely on the legacy templates. They will look identical to the original implementation until they are rewritten in React.
+
+If you are expecting a screen to be React-driven but it still looks like the legacy version, confirm that it lives under the `/candidate-form` or `/admin/users/new` routes. Anything outside those paths is still backed by the Jinja templates in `backend/templates`.
+
+
+
 ## Local development tips
 
 - Run `npm run dev` inside `backend/frontend` for the Vite dev server while working on React components.
