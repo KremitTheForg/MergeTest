@@ -1,7 +1,12 @@
+"""ORM models used by the FastAPI backend."""
+
+from __future__ import annotations
+
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, DateTime, ForeignKey, Identity
 from sqlalchemy.sql import func
-from .database import Base
+
+from app.database import Base
 
 class Candidate(Base):
     __tablename__ = "candidates"
@@ -51,3 +56,30 @@ class CandidateProfile(Base):
     updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     candidate: Mapped["Candidate"] = relationship(back_populates="profile")
+
+
+# Import the richer NDIS domain models so Alembic/Base can discover them.
+# These imports are intentionally placed at the bottom to avoid circular
+# references when the modules import ``Candidate`` or ``User`` from here.
+from .participant import Participant  # noqa: E402,F401
+from .referral import Referral  # noqa: E402,F401
+from .care_plan import (
+    CarePlan,
+    CarePlanGoal,
+    CarePlanService,
+    RiskAssessment,
+    SupportWorker,
+    CareTeamMember,
+    ParticipantNote,
+)  # noqa: E402,F401
+from .document import (
+    Document,
+    DocumentAccess,
+    DocumentCategory,
+    DocumentNotification,
+)  # noqa: E402,F401
+from .document_generation import (
+    DocumentGenerationTemplate,
+    GeneratedDocument,
+    DocumentGenerationVariable,
+)  # noqa: E402,F401
