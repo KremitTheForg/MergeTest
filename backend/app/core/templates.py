@@ -7,7 +7,7 @@ from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
 
-from jinja2 import ChoiceLoader, FileSystemLoader
+from jinja2 import ChoiceLoader, Environment, FileSystemLoader
 
 
 @lru_cache()
@@ -31,35 +31,21 @@ def get_templates() -> Jinja2Templates:
         base_dir / "app" / "templates",
     ]
 
-    existing_dirs = [str(path) for path in candidate_dirs if path.exists()]
+    existing_dirs = [path for path in candidate_dirs if path.exists()]
     if not existing_dirs:
         raise RuntimeError(
             "No template directories were found. Ensure 'backend/templates' "
             "exists in the project checkout."
         )
 
-    # ``Jinja2Templates`` requires an initial directory; afterward we swap in a
-    # ``ChoiceLoader`` so lookups span every available template folder.
-    templates = Jinja2Templates(directory=existing_dirs[0])
+    # Build a dedicated Jinja2 environment that is aware of every template
+    # directory from the outset.  Instantiating ``Jinja2Templates`` with the
+    # environment avoids reassigning loaders after initialisation which can be
+    # fragile on some platforms and older dependency versions.
+    loaders = [FileSystemLoader(str(path)) for path in existing_dirs]
+    loader = loaders[0] if len(loaders) == 1 else ChoiceLoader(loaders)
 
-    if len(existing_dirs) > 1:
-        templates.env.loader = ChoiceLoader(
-            [FileSystemLoader(path) for path in existing_dirs]
-        )
+    env = Environment(loader=loader, autoescape=True)
 
-    primary_dir = base_dir / "templates"
-    app_templates_dir = base_dir / "app" / "templates"
-
-    templates = Jinja2Templates(directory=str(primary_dir))
-
-    # Ensure secondary template locations remain discoverable.  ``exists``
-    # guards against missing optional folders (e.g. during partial checkouts).
-    for extra_dir in (app_templates_dir,):
-        if extra_dir.exists():
-            extra_path = str(extra_dir)
-            if extra_path not in templates.env.loader.searchpath:
-                templates.env.loader.searchpath.append(extra_path)
-
-
-    return templates
+    return Jinja2Templates(env=env)
 
