@@ -7,6 +7,8 @@ from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
 
+from jinja2 import ChoiceLoader, FileSystemLoader
+
 
 @lru_cache()
 def get_templates() -> Jinja2Templates:
@@ -23,6 +25,28 @@ def get_templates() -> Jinja2Templates:
     # ``backend/app/core/templates.py`` -> ``backend/app`` -> ``backend``
     base_dir = Path(__file__).resolve().parents[2]
 
+
+    candidate_dirs = [
+        base_dir / "templates",
+        base_dir / "app" / "templates",
+    ]
+
+    existing_dirs = [str(path) for path in candidate_dirs if path.exists()]
+    if not existing_dirs:
+        raise RuntimeError(
+            "No template directories were found. Ensure 'backend/templates' "
+            "exists in the project checkout."
+        )
+
+    # ``Jinja2Templates`` requires an initial directory; afterward we swap in a
+    # ``ChoiceLoader`` so lookups span every available template folder.
+    templates = Jinja2Templates(directory=existing_dirs[0])
+
+    if len(existing_dirs) > 1:
+        templates.env.loader = ChoiceLoader(
+            [FileSystemLoader(path) for path in existing_dirs]
+        )
+
     primary_dir = base_dir / "templates"
     app_templates_dir = base_dir / "app" / "templates"
 
@@ -35,6 +59,7 @@ def get_templates() -> Jinja2Templates:
             extra_path = str(extra_dir)
             if extra_path not in templates.env.loader.searchpath:
                 templates.env.loader.searchpath.append(extra_path)
+
 
     return templates
 

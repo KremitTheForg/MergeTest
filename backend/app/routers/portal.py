@@ -7,6 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
+
 from fastapi.templating import Jinja2Templates
 
 from sqlalchemy.orm import Session
@@ -18,7 +19,9 @@ from ..core.templates import get_templates
 router = APIRouter(prefix="/portal", tags=["portal"])
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = get_templates()
+
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
 FRONTEND_DIST_DIR = BASE_DIR / "static" / "forms"
 FRONTEND_INDEX_FILE = FRONTEND_DIST_DIR / "index.html"
 

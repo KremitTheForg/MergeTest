@@ -34,6 +34,7 @@ function App() {
           path="/applicant-profile/form"
           element={withShell(<ApplicantProfileForm />)}
         />
+
         <Route path="/evaluation" element={<EvaluationForm />} />
         <Route path="/add-employee" element={<AddEmployee />} />
         <Route path="/admin/users/new" element={<AddEmployee />} />
