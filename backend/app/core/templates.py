@@ -31,34 +31,26 @@ def get_templates() -> Jinja2Templates:
         base_dir / "app" / "templates",
     ]
 
-    existing_dirs = [str(path) for path in candidate_dirs if path.exists()]
+    existing_dirs = [path for path in candidate_dirs if path.exists()]
     if not existing_dirs:
         raise RuntimeError(
             "No template directories were found. Ensure 'backend/templates' "
             "exists in the project checkout."
         )
 
-    # ``Jinja2Templates`` requires an initial directory; afterward we swap in a
-    # ``ChoiceLoader`` so lookups span every available template folder.
-    templates = Jinja2Templates(directory=existing_dirs[0])
+    # ``Jinja2Templates`` requires an initial directory; we point it at the
+    # first available folder and then teach the underlying Jinja environment to
+    # look in every discovered directory.  ``ChoiceLoader`` keeps FastAPI from
+    # caring whether a template lives in ``backend/templates`` or
+    # ``backend/app/templates``.
+    templates = Jinja2Templates(directory=str(existing_dirs[0]))
 
-    if len(existing_dirs) > 1:
+    if len(existing_dirs) == 1:
+        templates.env.loader = FileSystemLoader(str(existing_dirs[0]))
+    else:
         templates.env.loader = ChoiceLoader(
-            [FileSystemLoader(path) for path in existing_dirs]
+            [FileSystemLoader(str(path)) for path in existing_dirs]
         )
-
-    primary_dir = base_dir / "templates"
-    app_templates_dir = base_dir / "app" / "templates"
-
-    templates = Jinja2Templates(directory=str(primary_dir))
-
-    # Ensure secondary template locations remain discoverable.  ``exists``
-    # guards against missing optional folders (e.g. during partial checkouts).
-    for extra_dir in (app_templates_dir,):
-        if extra_dir.exists():
-            extra_path = str(extra_dir)
-            if extra_path not in templates.env.loader.searchpath:
-                templates.env.loader.searchpath.append(extra_path)
 
 
     return templates
