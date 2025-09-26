@@ -6,7 +6,9 @@ import sys
 from pathlib import Path
 
 from jinja2.loaders import ChoiceLoader, FileSystemLoader
+
 from starlette.requests import Request
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 BACKEND_DIR = PROJECT_ROOT / "backend"
@@ -58,6 +60,7 @@ def test_expected_template_directories_are_registered():
     assert expected_dirs.issubset(search_paths)
 
 
+
 def test_login_template_renders_successfully():
     """Rendering the login template via ``TemplateResponse`` should succeed."""
 
@@ -80,3 +83,4 @@ def test_login_template_renders_successfully():
 
     assert response.status_code == 200
     assert "<form" in response.body.decode()
+
