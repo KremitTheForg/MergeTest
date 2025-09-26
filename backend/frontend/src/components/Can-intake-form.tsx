@@ -161,10 +161,10 @@ function IntakeForm() {
             <input
               type="text"
               name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
               placeholder="Enter first name"
               className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              value={formData.firstName}
+              onChange={handleChange}
             />
           </div>
           <div>
@@ -172,10 +172,10 @@ function IntakeForm() {
             <input
               type="text"
               name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
               placeholder="Enter last name"
               className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              value={formData.lastName}
+              onChange={handleChange}
             />
           </div>
           <div>
@@ -183,10 +183,10 @@ function IntakeForm() {
             <input
               type="date"
               name="appliedOn"
-              value={formData.appliedOn}
-              onChange={handleChange}
               placeholder="dd/mm/yyyy"
               className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              value={formData.appliedOn}
+              onChange={handleChange}
             />
           </div>
           <div>
@@ -194,10 +194,10 @@ function IntakeForm() {
             <input
               type="text"
               name="jobTitle"
-              value={formData.jobTitle}
-              onChange={handleChange}
               placeholder="Enter job title"
               className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              value={formData.jobTitle}
+              onChange={handleChange}
             />
           </div>
           <div>
@@ -205,10 +205,10 @@ function IntakeForm() {
             <input
               type="email"
               name="email"
-              value={formData.email}
-              onChange={handleChange}
               placeholder="Enter email address"
               className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              value={formData.email}
+              onChange={handleChange}
             />
           </div>
           <div>
@@ -216,10 +216,10 @@ function IntakeForm() {
             <input
               type="tel"
               name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleChange}
               placeholder="Enter phone number"
               className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              value={formData.phoneNumber}
+              onChange={handleChange}
             />
           </div>
         </div>
@@ -228,10 +228,10 @@ function IntakeForm() {
           <input
             type="text"
             name="suburb"
-            value={formData.suburb}
-            onChange={handleChange}
             placeholder="Enter suburb"
             className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-gray-400"
+            value={formData.suburb}
+            onChange={handleChange}
           />
         </div>
         <div>
@@ -254,7 +254,9 @@ function IntakeForm() {
               />
             </svg>
             <p className="text-gray-700 mb-1">
-              Drop your Documents here, or click to browse
+              {selectedFileName
+                ? selectedFileName
+                : "Drop your documents here, or click to browse"}
             </p>
             <p className="text-xs text-gray-500">
               PDF, DOC, DOCX, up to 1MB max.
@@ -267,14 +269,11 @@ function IntakeForm() {
               accept=".pdf,.doc,.docx"
               onChange={handleFileChange}
             />
-            {selectedFileName && (
-              <p className="mt-2 text-xs text-gray-500">{selectedFileName}</p>
-            )}
           </div>
         </div>
         <button
           type="submit"
-          className="bg-gray-700 text-white px-8 py-2 rounded font-medium mt-4 disabled:cursor-not-allowed disabled:opacity-60"
+          className="bg-gray-700 text-white px-8 py-2 rounded font-medium mt-4"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Submitting..." : "ADD"}
