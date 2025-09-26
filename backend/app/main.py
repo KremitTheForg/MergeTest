@@ -184,6 +184,8 @@ def list_candidates_users(request: Request, db: Session = Depends(get_db)):
 # =========================
 @app.get("/admin/users/new", response_class=HTMLResponse)
 def new_user_form(request: Request):
+    if FRONTEND_INDEX_FILE.exists():
+        return FileResponse(FRONTEND_INDEX_FILE, media_type="text/html")
     return templates.TemplateResponse("user_new.html", {"request": request})
 
 @app.post("/admin/users/new", response_class=HTMLResponse)

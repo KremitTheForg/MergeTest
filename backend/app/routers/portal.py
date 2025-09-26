@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -15,6 +15,8 @@ from ..services import profile as profile_service
 router = APIRouter(prefix="/portal", tags=["portal"])
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+FRONTEND_DIST_DIR = BASE_DIR / "static" / "forms"
+FRONTEND_INDEX_FILE = FRONTEND_DIST_DIR / "index.html"
 
 
 def get_current_user(request: Request, db: Session = Depends(database.get_db)) -> models.User:
@@ -44,6 +46,9 @@ def profile_form(
                 "error": "No candidate record associated with this account.",
             },
         )
+
+    if FRONTEND_INDEX_FILE.exists():
+        return FileResponse(FRONTEND_INDEX_FILE, media_type="text/html")
 
     profile = crud.get_or_create_profile(db, candidate.id)
     return templates.TemplateResponse(
@@ -158,6 +163,9 @@ def profile_admin(
                 "error": "No candidate record linked to this user.",
             },
         )
+
+    if FRONTEND_INDEX_FILE.exists():
+        return FileResponse(FRONTEND_INDEX_FILE, media_type="text/html")
 
     profile = crud.get_or_create_profile(db, candidate.id)
     return templates.TemplateResponse(

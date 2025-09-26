@@ -17,8 +17,14 @@ function App() {
         <Route path="/candidate-form" element={<IntakeForm />} />
         <Route path="/evaluation" element={<EvaluationForm />} />
         <Route path="/add-employee" element={<AddEmployee />} />
+        <Route path="/admin/users/new" element={<AddEmployee />} />
         <Route path="/add-training" element={<AddTraining />} />
         <Route path="/applicant-profile" element={<ApplicantProfile />} />
+        <Route path="/portal/profile" element={<ApplicantProfile />} />
+        <Route
+          path="/portal/profile/admin/:userId"
+          element={<ApplicantProfile />}
+        />
         <Route path="/applicant-profile/form" element={<ApplicantProfileForm />} />
         <Route
           path="/applicant-profile/documents"
