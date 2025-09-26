@@ -65,6 +65,8 @@ from .participant import Participant  # noqa: E402,F401
 from .referral import Referral  # noqa: E402,F401
 from .care_plan import (
     CarePlan,
+    ProspectiveWorkflow,
+    RiskAssessment,
     CarePlanGoal,
     CarePlanService,
     RiskAssessment,
@@ -82,4 +84,5 @@ from .document_generation import (
     DocumentGenerationTemplate,
     GeneratedDocument,
     DocumentGenerationVariable,
+    DocumentSignature,
 )  # noqa: E402,F401
