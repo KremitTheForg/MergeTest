@@ -46,6 +46,20 @@ def get_templates() -> Jinja2Templates:
     loader = loaders[0] if len(loaders) == 1 else ChoiceLoader(loaders)
 
     env = Environment(loader=loader, autoescape=True)
+    # ``Jinja2Templates`` requires an initial directory; we point it at the
+    # first available folder and then teach the underlying Jinja environment to
+    # look in every discovered directory.  ``ChoiceLoader`` keeps FastAPI from
+    # caring whether a template lives in ``backend/templates`` or
+    # ``backend/app/templates``.
+    templates = Jinja2Templates(directory=str(existing_dirs[0]))
+
+    if len(existing_dirs) == 1:
+        templates.env.loader = FileSystemLoader(str(existing_dirs[0]))
+    else:
+        templates.env.loader = ChoiceLoader(
+            [FileSystemLoader(str(path)) for path in existing_dirs]
+        )
+
 
     return Jinja2Templates(env=env)
 
