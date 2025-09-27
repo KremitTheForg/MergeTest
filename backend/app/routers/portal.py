@@ -15,15 +15,16 @@ from sqlalchemy.orm import Session
 from .. import models, schemas, crud, database
 from ..services import profile as profile_service
 from ..core.templates import get_templates
+from ..core.frontend import (
+    FRONTEND_INDEX_FILE,
+    ensure_frontend_build,
+)
 
 router = APIRouter(prefix="/portal", tags=["portal"])
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 templates = get_templates()
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
-
-FRONTEND_DIST_DIR = BASE_DIR / "static" / "forms"
-FRONTEND_INDEX_FILE = FRONTEND_DIST_DIR / "index.html"
 
 
 def get_current_user(request: Request, db: Session = Depends(database.get_db)) -> models.User:
@@ -54,7 +55,7 @@ def profile_form(
             },
         )
 
-    if FRONTEND_INDEX_FILE.exists():
+    if ensure_frontend_build():
         return FileResponse(FRONTEND_INDEX_FILE, media_type="text/html")
 
     profile = crud.get_or_create_profile(db, candidate.id)
@@ -171,7 +172,7 @@ def profile_admin(
             },
         )
 
-    if FRONTEND_INDEX_FILE.exists():
+    if ensure_frontend_build():
         return FileResponse(FRONTEND_INDEX_FILE, media_type="text/html")
 
     profile = crud.get_or_create_profile(db, candidate.id)
