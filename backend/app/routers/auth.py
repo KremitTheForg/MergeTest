@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from fastapi.responses import HTMLResponse, RedirectResponse
 from .. import schemas, crud, database, models
 from ..core.templates import get_templates
+from jinja2 import TemplateNotFound
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 templates = get_templates()
@@ -11,7 +12,44 @@ templates = get_templates()
 # GET: show login form
 @router.get("/login", response_class=HTMLResponse)
 def login_form(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    try:
+        return templates.TemplateResponse("login.html", {"request": request})
+    except TemplateNotFound:
+        fallback_html = """
+        <!DOCTYPE html>
+        <html lang=\"en\">
+        <head>
+            <meta charset=\"utf-8\">
+            <title>Login</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 2rem auto; max-width: 32rem; }
+                form { display: flex; flex-direction: column; gap: 1rem; }
+                label { font-weight: 600; }
+                input { padding: 0.5rem; font-size: 1rem; }
+                button { padding: 0.75rem; font-size: 1rem; cursor: pointer; }
+                .hint { margin-top: 1rem; font-size: 0.9rem; }
+                .hint code { font-family: monospace; }
+            </style>
+        </head>
+        <body>
+            <h2>Login</h2>
+            <p>The expected template <code>backend/templates/login.html</code> could not be located. This
+            inline fallback is rendered so local development can continue, but you should restore the
+            missing template file for the full experience.</p>
+            <form action=\"/auth/login\" method=\"post\">
+                <label for=\"email\">Email</label>
+                <input id=\"email\" type=\"email\" name=\"email\" required>
+
+                <label for=\"password\">Password</label>
+                <input id=\"password\" type=\"password\" name=\"password\" required>
+
+                <button type=\"submit\">Login</button>
+            </form>
+            <p class=\"hint\">Don’t have an account? <a href=\"/auth/register\">Register here</a>.</p>
+        </body>
+        </html>
+        """
+        return HTMLResponse(content=fallback_html, status_code=200)
 
 
 # POST: handle login
