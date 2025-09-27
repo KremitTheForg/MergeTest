@@ -19,6 +19,10 @@ from app.routers import portal as portal_router
 from app.routers import auth as auth_router
 from app.routers import api as api_router
 from app.core.templates import get_templates
+from app.core.frontend import (
+    FRONTEND_INDEX_FILE,
+    ensure_frontend_build,
+)
 from app.services import admin as admin_service
 from app.api.v1.api import api_router as ndis_api_router
 
@@ -34,9 +38,6 @@ app = FastAPI(title="Candidate Intake API")
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = get_templates()
 app.add_middleware(SessionMiddleware, secret_key="super-secret-key")
-
-FRONTEND_DIST_DIR = BASE_DIR / "static" / "forms"
-FRONTEND_INDEX_FILE = FRONTEND_DIST_DIR / "index.html"
 
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 app.mount("/uploads", StaticFiles(directory=str(BASE_DIR / "uploads")), name="uploads")
@@ -66,7 +67,7 @@ def home(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/candidate-form", response_class=HTMLResponse)
 def candidate_form(request: Request):
-    if FRONTEND_INDEX_FILE.exists():
+    if ensure_frontend_build():
         return FileResponse(FRONTEND_INDEX_FILE, media_type="text/html")
     return templates.TemplateResponse("index.html", {"request": request})
 
@@ -184,7 +185,7 @@ def list_candidates_users(request: Request, db: Session = Depends(get_db)):
 # =========================
 @app.get("/admin/users/new", response_class=HTMLResponse)
 def new_user_form(request: Request):
-    if FRONTEND_INDEX_FILE.exists():
+    if ensure_frontend_build():
         return FileResponse(FRONTEND_INDEX_FILE, media_type="text/html")
     return templates.TemplateResponse("user_new.html", {"request": request})
 

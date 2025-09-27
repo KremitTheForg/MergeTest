@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import IntakeForm from "./components/Can-intake-form";
 import EvaluationForm from "./components/EvaluationForm";
@@ -11,7 +12,7 @@ import OfferEmail from "./components/Offer_email";
 import AppShell from "./components/layout/AppShell";
 
 function App() {
-  const withShell = (element: JSX.Element, showLogout = true) => (
+  const withShell = (element: ReactElement, showLogout = true) => (
     <AppShell showLogout={showLogout}>{element}</AppShell>
   );
 
@@ -35,17 +36,6 @@ function App() {
           element={withShell(<ApplicantProfileForm />)}
         />
 
-        <Route path="/evaluation" element={<EvaluationForm />} />
-        <Route path="/add-employee" element={<AddEmployee />} />
-        <Route path="/admin/users/new" element={<AddEmployee />} />
-        <Route path="/add-training" element={<AddTraining />} />
-        <Route path="/applicant-profile" element={<ApplicantProfile />} />
-        <Route path="/portal/profile" element={<ApplicantProfile />} />
-        <Route
-          path="/portal/profile/admin/:userId"
-          element={<ApplicantProfile />}
-        />
-        <Route path="/applicant-profile/form" element={<ApplicantProfileForm />} />
         <Route
           path="/applicant-profile/documents"
           element={withShell(<ApplicantProfileDocument />)}
