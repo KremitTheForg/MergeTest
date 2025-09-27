@@ -16,6 +16,7 @@ FRONTEND_PACKAGE_JSON = FRONTEND_DIR / "package.json"
 FRONTEND_PACKAGE_LOCK = FRONTEND_DIR / "package-lock.json"
 
 
+
 def ensure_frontend_build(*, force: bool = False) -> bool:
     """Ensure the React frontend has been built.
 
@@ -88,12 +89,18 @@ def _run_npm_command(npm_executable: str, args: list[str], description: str) -> 
     try:
         completed = subprocess.run(
             [npm_executable, *args],
+
+    try:
+        completed = subprocess.run(
+            [npm_executable, "run", "build"],
+
             cwd=FRONTEND_DIR,
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
         )
+
     except subprocess.CalledProcessError as exc:
         logging.getLogger(__name__).warning(
             "Failed to %s: %s", description, exc
@@ -109,3 +116,28 @@ def _run_npm_command(npm_executable: str, args: list[str], description: str) -> 
         logger.debug("npm %s stderr: %s", description, stderr)
 
     return True
+
+        logging.getLogger(__name__).info(
+            "Built frontend assets via npm. output=%s", completed.stdout.strip()
+        )
+        if completed.stderr:
+            logging.getLogger(__name__).debug(
+                "npm build stderr: %s", completed.stderr.strip()
+            )
+    except subprocess.CalledProcessError as exc:
+        logging.getLogger(__name__).warning(
+            "Failed to build frontend assets: %s", exc
+        )
+        return False
+
+    return FRONTEND_INDEX_FILE.exists()
+
+
+def _find_npm() -> Optional[str]:
+    """Return the npm executable if it can be located on PATH."""
+
+    for candidate in ("npm", "npm.cmd", "npm.exe"):
+        if shutil.which(candidate):
+            return candidate
+    return None
+
