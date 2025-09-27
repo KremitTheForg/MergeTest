@@ -35,6 +35,19 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def get_password_hash(password: str):
     return pwd_context.hash(password)
 
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Return ``True`` when ``plain_password`` matches ``hashed_password``.
+
+    Legacy deployments saved passwords in clear text before Passlib hashing was
+    introduced. ``pwd_context.verify`` raises ``ValueError`` when it receives a
+    non-hash input. Instead of bubbling that up (and returning HTTP 500 from the
+    login route), treat the password as invalid and allow the caller to respond
+    with ``401 Unauthorized``.
+    """
+
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except ValueError:
 def verify_password(plain_password, hashed_password):
     try:
         return pwd_context.verify(plain_password, hashed_password)

@@ -6,7 +6,6 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Iterable
 
-
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, DateTime, ForeignKey, Identity
 from sqlalchemy.sql import func
@@ -130,9 +129,9 @@ _reexport_models(
     ),
 )
 
+
 # Import the richer NDIS domain models so Alembic/Base can discover them while
 # gracefully handling optional tables.  The ``_reexport_models`` helper above
 # already imports each module and exposes available ORM classes, so we avoid
 # repeating direct ``from .module import ...`` statements that can fail when an
 # expected optional class is absent from the codebase.
-
