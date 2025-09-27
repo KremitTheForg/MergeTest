@@ -129,3 +129,9 @@ _reexport_models(
     ),
 )
 
+
+# Import the richer NDIS domain models so Alembic/Base can discover them while
+# gracefully handling optional tables.  The ``_reexport_models`` helper above
+# already imports each module and exposes available ORM classes, so we avoid
+# repeating direct ``from .module import ...`` statements that can fail when an
+# expected optional class is absent from the codebase.
