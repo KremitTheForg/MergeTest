@@ -105,6 +105,10 @@ _reexport_models(
         "ProspectiveWorkflow",
         "RiskAssessment",
         "CarePlanGoal",
+        "CarePlanService",
+        "SupportWorker",
+        "CareTeamMember",
+        "ParticipantNote",
     ),
 )
 _reexport_models(
@@ -126,32 +130,9 @@ _reexport_models(
     ),
 )
 
-# Import the richer NDIS domain models so Alembic/Base can discover them.
-# These imports are intentionally placed at the bottom to avoid circular
-# references when the modules import ``Candidate`` or ``User`` from here.
-from .participant import Participant  # noqa: E402,F401
-from .referral import Referral  # noqa: E402,F401
-from .care_plan import (
-    CarePlan,
-    ProspectiveWorkflow,
-    RiskAssessment,
-    CarePlanGoal,
-    CarePlanService,
-    RiskAssessment,
-    SupportWorker,
-    CareTeamMember,
-    ParticipantNote,
-)  # noqa: E402,F401
-from .document import (
-    Document,
-    DocumentAccess,
-    DocumentCategory,
-    DocumentNotification,
-)  # noqa: E402,F401
-from .document_generation import (
-    DocumentGenerationTemplate,
-    GeneratedDocument,
-    DocumentGenerationVariable,
-    DocumentSignature,
-)  # noqa: E402,F401
+# Import the richer NDIS domain models so Alembic/Base can discover them while
+# gracefully handling optional tables.  The ``_reexport_models`` helper above
+# already imports each module and exposes available ORM classes, so we avoid
+# repeating direct ``from .module import ...`` statements that can fail when an
+# expected optional class is absent from the codebase.
 
