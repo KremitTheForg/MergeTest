@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy.orm import Session
 from . import models, schemas
 from passlib.context import CryptContext
@@ -26,13 +28,19 @@ def get_candidates(db: Session, skip: int = 0, limit: int = 10):
 
 ##
 
+logger = logging.getLogger(__name__)
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def get_password_hash(password: str):
     return pwd_context.hash(password)
 
 def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except ValueError:
+        logger.warning("Received invalid password hash when verifying credentials")
+        return False
 
 def create_user(db: Session, user: schemas.UserCreate):
     hashed_pw = get_password_hash(user.password)
