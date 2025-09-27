@@ -11,6 +11,13 @@ for authentication unless noted otherwise.
 > Tip: Sign into the app with your browser first, then copy the session cookie
 > (`session`) into an API client such as Hoppscotch or Insomnia.
 
+!!! note
+    Legacy accounts created before password hashing was rolled out may still
+    store clear-text passwords. The login form now treats those records as
+    invalid credentials (HTTP 401) instead of failing with an internal server
+    error. Re-create the affected users via the admin interface so their
+    passwords are re-hashed.
+
 ## Identity
 
 ### `GET /api/v1/me`
